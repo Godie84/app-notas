@@ -1,5 +1,5 @@
 //let notaEnEdicionId = null; // Identificador temporal para saber si se está editando una nota
-
+const CLAVE_SECRETA = 'Dulc32025'; // Puedes cambiarla, ¡pero mantenla en privado!
 class NotasApp {
     constructor(itemsPorPagina = 5) {
         this.ITEMS_POR_PAGINA = itemsPorPagina;
@@ -9,12 +9,29 @@ class NotasApp {
     }
 
     getNotas() {
-        return JSON.parse(localStorage.getItem('notas')) || [];
+        const dataCifrada = localStorage.getItem('notas');
+        if (!dataCifrada) return [];
+    
+        try {
+            const bytes = CryptoJS.AES.decrypt(dataCifrada, CLAVE_SECRETA);
+            const datosDescifrados = bytes.toString(CryptoJS.enc.Utf8);
+            return JSON.parse(datosDescifrados);
+        } catch (e) {
+            console.error('Error al descifrar notas:', e);
+            return [];
+        }
     }
-
+    
     saveNotas() {
-        localStorage.setItem('notas', JSON.stringify(this.notas));
+        try {
+            const data = JSON.stringify(this.notas);
+            const dataCifrada = CryptoJS.AES.encrypt(data, CLAVE_SECRETA).toString();
+            localStorage.setItem('notas', dataCifrada);
+        } catch (e) {
+            console.error('Error al cifrar notas:', e);
+        }
     }
+    
 
     agregarNota(titulo, descripcion, categoria) {
         if (!titulo || !descripcion) {
